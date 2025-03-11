@@ -223,6 +223,31 @@
       }
       
       /* OpenStreetMap marker styles */
+      .donor-marker {
+        background-color: #3388ff;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 2px solid white;
+      }
+      
+      .org-marker {
+        background-color: #ff3333;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 2px solid white;
+      }
+      
+      .org-marker-container {
+        background: none !important;
+      }
+      
+      /* Fix for map container */
+      #donation-map {
+        z-index: 1;
+      }
+      
       <%= OSM_STYLES %>
     </style>
   </head>
@@ -614,3 +639,4 @@
     </script>
   </body>
 </html>
+

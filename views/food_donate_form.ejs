@@ -18,6 +18,7 @@
     <script src="/js/maps-config.js"></script>
     <script src="/js/openstreetmap-utils.js"></script>
     <script src="/js/ml-services/recommendation-service.js"></script>
+    <script src="/js/ml-services/food-quality-service.js"></script>
     
     <!-- Leaflet CSS and JS for OpenStreetMap -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -222,7 +223,59 @@
         font-style: italic;
       }
       
+      /* Food quality assessment styles */
+      .image-upload-container {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+      
+      .quality-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        color: white;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+      }
+      
+      .warning-message {
+        color: #856404;
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        padding: 8px;
+        margin-top: 8px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+      
       /* OpenStreetMap marker styles */
+      .donor-marker {
+        background-color: #3388ff;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 2px solid white;
+      }
+      
+      .org-marker {
+        background-color: #ff3333;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 2px solid white;
+      }
+      
+      .org-marker-container {
+        background: none !important;
+      }
+      
+      /* Fix for map container */
+      #donation-map {
+        z-index: 1;
+      }
+      
       <%= OSM_STYLES %>
     </style>
   </head>
@@ -342,6 +395,56 @@
                   id="inp2"
                   required
                 />
+              </div>
+            </div>
+
+            <!-- Add food quality assessment section -->
+            <div class="mt-4 mb-3">
+              <h3 class="image-heading">Food Image:</h3>
+              <p class="text-muted small">Upload an image of the food to assess its quality (optional)</p>
+              
+              <div class="image-upload-container">
+                <div class="row">
+                  <div class="col-md-6">
+                    <input type="file" id="foodImageInput" class="form-control" accept="image/*">
+                    <div class="mt-2">
+                      <button type="button" id="analyzeImageBtn" class="btn btn-secondary" disabled>
+                        Analyze Food Quality
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div id="imagePreview" class="d-none">
+                      <img id="foodImagePreview" class="img-fluid mt-2 rounded" style="max-height: 200px;">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Quality assessment results -->
+              <div id="qualityResults" class="mt-3 d-none">
+                <div class="card">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Food Quality Assessment</h5>
+                    <span id="qualityBadge" class="badge rounded-pill"></span>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <p><strong>Identified as:</strong> <span id="foodIdentifiedAs"></span></p>
+                        <p><strong>Confidence:</strong> <span id="confidenceScore"></span></p>
+                        <p><strong>Freshness:</strong> <span id="freshnessScore"></span></p>
+                      </div>
+                      <div class="col-md-6">
+                        <div id="warningAlert" class="alert alert-warning d-none">
+                          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                          <span id="warningText"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <input type="hidden" name="foodQualityAssessment" id="foodQualityAssessment">
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -514,100 +617,198 @@
         }
       }
       
-      function initMap() {
-        // Initialize OpenStreetMap
-        const map = L.map('donation-map').setView([CHENNAI_CENTER.lat, CHENNAI_CENTER.lng], DEFAULT_ZOOM);
-        
-        // Add the OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          maxZoom: 19
-        }).addTo(map);
-        
-        // Get address components from the page
-        const street = "<%= don_details.street %>";
-        const city = "<%= don_details.city %>";
-        const district = "<%= don_details.dist %>";
-        const state = "<%= don_details.state %>";
-        const pincode = "<%= don_details.pincode %>";
-        
-        // Construct full address
-        const fullAddress = `${street}, ${city}, ${district}, ${state}, ${pincode}`;
-        
-        // Geocode using Nominatim
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress + ', Chennai, Tamil Nadu, India')}`)
-          .then(response => response.json())
-          .then(data => {
-            if (data && data.length > 0) {
-              const lat = parseFloat(data[0].lat);
-              const lon = parseFloat(data[0].lon);
+      // Image upload and analysis functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the file input change event listener
+        const foodImageInput = document.getElementById('foodImageInput');
+        if (foodImageInput) {
+          foodImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+              // Enable analyze button
+              document.getElementById('analyzeImageBtn').disabled = false;
               
-              // Center the map
-              map.setView([lat, lon], DEFAULT_ZOOM);
-              
-              // Add marker
-              const marker = L.marker([lat, lon]).addTo(map);
-              marker.bindPopup(`<h5>Pickup Location</h5><p>${fullAddress}</p>`).openPopup();
-              
-              // Add event listener to organization select to show organization location
-              document.getElementById('org_sel').addEventListener('change', function() {
-                const selectedOrg = this.value;
-                if (!selectedOrg) return;
-                
-                // Find the selected organization data
-                <% for (let i = 0; i < dataArr.org_data.length; i++) { %>
-                  if (selectedOrg === "<%= dataArr.org_data[i].organization_name %>") {
-                    const orgStreet = "<%= dataArr.org_data[i].street %>";
-                    const orgCity = "<%= dataArr.org_data[i].city %>";
-                    const orgDistrict = "<%= dataArr.org_data[i].dist %>";
-                    const orgState = "<%= dataArr.org_data[i].state %>";
-                    const orgPincode = "<%= dataArr.org_data[i].pincode %>";
-                    
-                    const orgAddress = `${orgStreet}, ${orgCity}, ${orgDistrict}, ${orgState}, ${orgPincode}`;
-                    
-                    // Geocode the organization address
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(orgAddress + ', Chennai, Tamil Nadu, India')}`)
-                      .then(response => response.json())
-                      .then(data => {
-                        if (data && data.length > 0) {
-                          const lat = parseFloat(data[0].lat);
-                          const lon = parseFloat(data[0].lon);
-                          
-                          // Add marker for organization
-                          const orgMarker = L.marker([lat, lon], {
-                            icon: L.divIcon({
-                              html: `<div class="org-marker" title="${selectedOrg}"></div>`,
-                              className: 'org-marker-container',
-                              iconSize: [25, 41],
-                              iconAnchor: [12, 41]
-                            })
-                          }).addTo(map);
-                          
-                          orgMarker.bindPopup(`<h5>${selectedOrg}</h5><p>${orgAddress}</p>`).openPopup();
-                          
-                          // Adjust map bounds to show both markers
-                          const bounds = L.latLngBounds(
-                            marker.getLatLng(),
-                            [lat, lon]
-                          );
-                          map.fitBounds(bounds);
-                        }
-                      })
-                      .catch(error => {
-                        console.error("Error with Nominatim geocoding:", error);
-                      });
-                  }
-                <% } %>
-              });
+              // Show image preview
+              const reader = new FileReader();
+              reader.onload = function(event) {
+                const imgPreview = document.getElementById('foodImagePreview');
+                imgPreview.src = event.target.result;
+                document.getElementById('imagePreview').classList.remove('d-none');
+              };
+              reader.readAsDataURL(file);
+            } else {
+              document.getElementById('analyzeImageBtn').disabled = true;
+              document.getElementById('imagePreview').classList.add('d-none');
             }
-          })
-          .catch(error => {
-            console.error("Error with Nominatim geocoding:", error);
           });
-      }
-      
-      // Initialize map when the page loads
-      document.addEventListener('DOMContentLoaded', initMap);
+        }
+        
+        // Initialize the analyze button click event listener
+        const analyzeImageBtn = document.getElementById('analyzeImageBtn');
+        if (analyzeImageBtn) {
+          analyzeImageBtn.addEventListener('click', async function() {
+            const fileInput = document.getElementById('foodImageInput');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+              alert('Please select an image to analyze');
+              return;
+            }
+            
+            // Show loading state
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analyzing...';
+            this.disabled = true;
+            
+            try {
+              const formData = new FormData();
+              formData.append('foodImage', fileInput.files[0]);
+              
+              const response = await fetch('/api/analyze-food-image', {
+                method: 'POST',
+                body: formData
+              });
+              
+              if (!response.ok) {
+                throw new Error('Failed to analyze image');
+              }
+              
+              const data = await response.json();
+              
+              // Display results
+              document.getElementById('qualityResults').classList.remove('d-none');
+              document.getElementById('foodIdentifiedAs').textContent = data.identifiedAs || 'Unknown food';
+              document.getElementById('confidenceScore').textContent = data.confidence ? `${Math.round(data.confidence * 100)}%` : 'N/A';
+              document.getElementById('freshnessScore').textContent = data.freshness || 'Unknown';
+              
+              // Set quality badge
+              const qualityBadge = document.getElementById('qualityBadge');
+              qualityBadge.textContent = data.quality || 'Unknown';
+              qualityBadge.className = 'badge rounded-pill'; // Reset classes
+              
+              if (data.quality === 'Excellent' || data.quality === 'Good') {
+                qualityBadge.classList.add('bg-success');
+              } else if (data.quality === 'Fair') {
+                qualityBadge.classList.add('bg-warning');
+              } else {
+                qualityBadge.classList.add('bg-danger');
+              }
+              
+              // Show warning if applicable
+              if (data.warning) {
+                document.getElementById('warningText').textContent = data.warning;
+                document.getElementById('warningAlert').classList.remove('d-none');
+              } else {
+                document.getElementById('warningAlert').classList.add('d-none');
+              }
+              
+              // Store assessment in hidden field for form submission
+              document.getElementById('foodQualityAssessment').value = JSON.stringify(data);
+            } catch (error) {
+              console.error('Error analyzing image:', error);
+              alert('Failed to analyze the image. Please try again.');
+            } finally {
+              // Reset button state
+              this.innerHTML = 'Analyze Food Quality';
+              this.disabled = false;
+            }
+          });
+        }
+        
+        // Initialize map when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+          // Initialize map
+          const map = L.map('donation-map').setView([CHENNAI_CENTER.lat, CHENNAI_CENTER.lng], DEFAULT_ZOOM);
+          
+          // Add the OpenStreetMap tile layer
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+          }).addTo(map);
+          
+          // Get address components from the page
+          const street = "<%= don_details.street %>";
+          const city = "<%= don_details.city %>";
+          const district = "<%= don_details.dist %>";
+          const state = "<%= don_details.state %>";
+          const pincode = "<%= don_details.pincode %>";
+          
+          // Construct full address
+          const fullAddress = `${street}, ${city}, ${district}, ${state}, ${pincode}`;
+          
+          // Geocode using Nominatim
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress + ', Chennai, Tamil Nadu, India')}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data && data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lon = parseFloat(data[0].lon);
+                
+                // Center the map
+                map.setView([lat, lon], DEFAULT_ZOOM);
+                
+                // Add marker
+                const marker = L.marker([lat, lon]).addTo(map);
+                marker.bindPopup(`<h5>Pickup Location</h5><p>${fullAddress}</p>`).openPopup();
+                
+                // Add event listener to organization select to show organization location
+                document.getElementById('org_sel').addEventListener('change', function() {
+                  const selectedOrg = this.value;
+                  if (!selectedOrg) return;
+                  
+                  // Find the selected organization data
+                  <% for (let i = 0; i < dataArr.org_data.length; i++) { %>
+                    if (selectedOrg === "<%= dataArr.org_data[i].organization_name %>") {
+                      const orgStreet = "<%= dataArr.org_data[i].street %>";
+                      const orgCity = "<%= dataArr.org_data[i].city %>";
+                      const orgDistrict = "<%= dataArr.org_data[i].dist %>";
+                      const orgState = "<%= dataArr.org_data[i].state %>";
+                      const orgPincode = "<%= dataArr.org_data[i].pincode %>";
+                      
+                      const orgAddress = `${orgStreet}, ${orgCity}, ${orgDistrict}, ${orgState}, ${orgPincode}`;
+                      
+                      // Geocode the organization address
+                      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(orgAddress + ', Chennai, Tamil Nadu, India')}`)
+                        .then(response => response.json())
+                        .then(data => {
+                          if (data && data.length > 0) {
+                            const lat = parseFloat(data[0].lat);
+                            const lon = parseFloat(data[0].lon);
+                            
+                            // Add marker for organization
+                            const orgMarker = L.marker([lat, lon], {
+                              icon: L.divIcon({
+                                html: `<div class="org-marker" title="${selectedOrg}"></div>`,
+                                className: 'org-marker-container',
+                                iconSize: [25, 41],
+                                iconAnchor: [12, 41]
+                              })
+                            }).addTo(map);
+                            
+                            orgMarker.bindPopup(`<h5>${selectedOrg}</h5><p>${orgAddress}</p>`).openPopup();
+                            
+                            // Adjust map bounds to show both markers
+                            const bounds = L.latLngBounds(
+                              marker.getLatLng(),
+                              [lat, lon]
+                            );
+                            map.fitBounds(bounds);
+                          }
+                        })
+                        .catch(error => {
+                          console.error("Error with Nominatim geocoding:", error);
+                        });
+                    }
+                  <% } %>
+                });
+              }
+            })
+            .catch(error => {
+              console.error("Error with Nominatim geocoding:", error);
+            });
+          
+          // Load recommendations
+          loadRecommendations();
+        });
+      });
     </script>
   </body>
 </html>
