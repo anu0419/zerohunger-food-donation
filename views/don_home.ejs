@@ -96,6 +96,79 @@
       p {
         text-align: justify;
       }
+      .chat-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #666699;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .chat-btn:hover {
+        background-color: #555588;
+      }
+      .chat-popup {
+        display: none;
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 300px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        padding: 15px;
+      }
+      .org-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .org-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+      }
+      .org-item:hover {
+        background-color: #f5f5f5;
+      }
+      .close-popup {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 18px;
+      }
+      .map-btn {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .map-btn:hover {
+        background-color: #45a049;
+      }
     </style>
   </head>
   <body>
@@ -171,6 +244,9 @@
                 >
               </li>
               <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="/find-organizations">Find Organizations</a>
+              </li>
+              <li class="nav-item">
                 <a class="nav-link" href="/logout">LogOut</a>
               </li>
             </ul>
@@ -214,5 +290,58 @@
         </div>
       </div>
     </div>
+    
+    <button class="chat-btn" id="chatBtn">💬</button>
+    <a href="/find-organizations" class="map-btn" title="Find Organizations on Map">🗺️</a>
+    <div class="chat-popup" id="chatPopup">
+      <span class="close-popup" id="closePopup">&times;</span>
+      <h4>Chat with Organizations</h4>
+      <div class="org-list" id="orgList">
+        <p>Loading organizations...</p>
+      </div>
+    </div>
+    
+    <script>
+      document.getElementById('chatBtn').addEventListener('click', function() {
+        const popup = document.getElementById('chatPopup');
+        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        
+        if (popup.style.display === 'block') {
+          loadOrganizations();
+        }
+      });
+      
+      document.getElementById('closePopup').addEventListener('click', function() {
+        document.getElementById('chatPopup').style.display = 'none';
+      });
+      
+      async function loadOrganizations() {
+        try {
+          const response = await fetch('/api/organizations');
+          const organizations = await response.json();
+          
+          const orgList = document.getElementById('orgList');
+          
+          if (organizations.length === 0) {
+            orgList.innerHTML = '<p>No organizations available.</p>';
+            return;
+          }
+          
+          orgList.innerHTML = '';
+          organizations.forEach(org => {
+            const div = document.createElement('div');
+            div.className = 'org-item';
+            div.textContent = org.name;
+            div.addEventListener('click', function() {
+              window.location.href = `/chat/${org.name}`;
+            });
+            orgList.appendChild(div);
+          });
+        } catch (error) {
+          console.error('Error loading organizations:', error);
+          document.getElementById('orgList').innerHTML = '<p>Error loading organizations. Please try again.</p>';
+        }
+      }
+    </script>
   </body>
 </html>

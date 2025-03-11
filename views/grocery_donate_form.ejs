@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Donate Food</title>
+    <title>Donate Grocery</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -15,6 +15,13 @@
       integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
       crossorigin="anonymous"
     ></script>
+    <script src="/js/maps-config.js"></script>
+    <script src="/js/openstreetmap-utils.js"></script>
+    
+    <!-- Leaflet CSS and JS for OpenStreetMap -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
     <style>
       body {
         background-image: url("https://static.vecteezy.com/system/resources/previews/001/409/329/original/colorful-organic-geometric-shapes-abstract-background-free-vector.jpg");
@@ -187,6 +194,17 @@
         color: white;
         font-weight: bold;
       }
+      #donation-map {
+        height: 300px;
+        width: 100%;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 5px grey;
+      }
+      
+      /* OpenStreetMap marker styles */
+      <%= OSM_STYLES %>
     </style>
   </head>
   <body>
@@ -262,6 +280,9 @@
                 >
               </li>
               <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="/find-organizations">Find Organizations</a>
+              </li>
+              <li class="nav-item">
                 <a class="nav-link" href="/logout">LogOut</a>
               </li>
             </ul>
@@ -326,6 +347,11 @@
               <%= don_details.pincode %>
             </p>
           </div>
+          
+          <!-- Add map container -->
+          <h3 class="map-heading mt-3">Your Location on Map:</h3>
+          <div id="donation-map"></div>
+          
           <div class="donate">
             <button
               type="submit"
@@ -406,6 +432,101 @@
           }
         });
       }
+      
+      function initMap() {
+        // Initialize OpenStreetMap
+        const map = L.map('donation-map').setView([CHENNAI_CENTER.lat, CHENNAI_CENTER.lng], DEFAULT_ZOOM);
+        
+        // Add the OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19
+        }).addTo(map);
+        
+        // Get address components from the page
+        const street = "<%= don_details.street %>";
+        const city = "<%= don_details.city %>";
+        const district = "<%= don_details.dist %>";
+        const state = "<%= don_details.state %>";
+        const pincode = "<%= don_details.pincode %>";
+        
+        // Construct full address
+        const fullAddress = `${street}, ${city}, ${district}, ${state}, ${pincode}`;
+        
+        // Geocode using Nominatim
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress + ', Chennai, Tamil Nadu, India')}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              const lat = parseFloat(data[0].lat);
+              const lon = parseFloat(data[0].lon);
+              
+              // Center the map
+              map.setView([lat, lon], DEFAULT_ZOOM);
+              
+              // Add marker
+              const marker = L.marker([lat, lon]).addTo(map);
+              marker.bindPopup(`<h5>Pickup Location</h5><p>${fullAddress}</p>`).openPopup();
+              
+              // Add event listener to organization select to show organization location
+              document.getElementById('org_sel').addEventListener('change', function() {
+                const selectedOrg = this.value;
+                if (!selectedOrg) return;
+                
+                // Find the selected organization data
+                <% for (let i = 0; i < dataArr.org_data.length; i++) { %>
+                  if (selectedOrg === "<%= dataArr.org_data[i].organization_name %>") {
+                    const orgStreet = "<%= dataArr.org_data[i].street %>";
+                    const orgCity = "<%= dataArr.org_data[i].city %>";
+                    const orgDistrict = "<%= dataArr.org_data[i].dist %>";
+                    const orgState = "<%= dataArr.org_data[i].state %>";
+                    const orgPincode = "<%= dataArr.org_data[i].pincode %>";
+                    
+                    const orgAddress = `${orgStreet}, ${orgCity}, ${orgDistrict}, ${orgState}, ${orgPincode}`;
+                    
+                    // Geocode the organization address
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(orgAddress + ', Chennai, Tamil Nadu, India')}`)
+                      .then(response => response.json())
+                      .then(data => {
+                        if (data && data.length > 0) {
+                          const lat = parseFloat(data[0].lat);
+                          const lon = parseFloat(data[0].lon);
+                          
+                          // Add marker for organization
+                          const orgMarker = L.marker([lat, lon], {
+                            icon: L.divIcon({
+                              html: `<div class="org-marker" title="${selectedOrg}"></div>`,
+                              className: 'org-marker-container',
+                              iconSize: [25, 41],
+                              iconAnchor: [12, 41]
+                            })
+                          }).addTo(map);
+                          
+                          orgMarker.bindPopup(`<h5>${selectedOrg}</h5><p>${orgAddress}</p>`).openPopup();
+                          
+                          // Adjust map bounds to show both markers
+                          const bounds = L.latLngBounds(
+                            marker.getLatLng(),
+                            [lat, lon]
+                          );
+                          map.fitBounds(bounds);
+                        }
+                      })
+                      .catch(error => {
+                        console.error("Error with Nominatim geocoding:", error);
+                      });
+                  }
+                <% } %>
+              });
+            }
+          })
+          .catch(error => {
+            console.error("Error with Nominatim geocoding:", error);
+          });
+      }
+      
+      // Initialize map when the page loads
+      document.addEventListener('DOMContentLoaded', initMap);
     </script>
   </body>
 </html>

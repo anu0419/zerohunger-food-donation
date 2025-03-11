@@ -145,6 +145,58 @@
       .rehead div p{
         margin: 0;
       }
+      .chat-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #666699;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .chat-btn:hover {
+        background-color: #555588;
+      }
+      .chat-popup {
+        display: none;
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 300px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        padding: 15px;
+      }
+      .donor-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .donor-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+      }
+      .donor-item:hover {
+        background-color: #f5f5f5;
+      }
+      .close-popup {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 18px;
+      }
     </style>
   </head>
   <body>
@@ -307,5 +359,59 @@
         </div>
         <% } %>
       </div>
+    </div>
+    
+    <button class="chat-btn" id="chatBtn">💬</button>
+    <div class="chat-popup" id="chatPopup">
+      <span class="close-popup" id="closePopup">&times;</span>
+      <h4>Chat with Donors</h4>
+      <div class="donor-list" id="donorList">
+        <!-- Donors will be loaded here -->
+        <p>Loading donors...</p>
+      </div>
+    </div>
+    
+    <script>
+      document.getElementById('chatBtn').addEventListener('click', function() {
+        const popup = document.getElementById('chatPopup');
+        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        
+        if (popup.style.display === 'block') {
+          loadDonors();
+        }
+      });
+      
+      document.getElementById('closePopup').addEventListener('click', function() {
+        document.getElementById('chatPopup').style.display = 'none';
+      });
+      
+      async function loadDonors() {
+        try {
+          const response = await fetch('/api/donors');
+          const donors = await response.json();
+          
+          const donorList = document.getElementById('donorList');
+          
+          if (donors.length === 0) {
+            donorList.innerHTML = '<p>No donors available.</p>';
+            return;
+          }
+          
+          donorList.innerHTML = '';
+          donors.forEach(donor => {
+            const div = document.createElement('div');
+            div.className = 'donor-item';
+            div.textContent = donor.name;
+            div.addEventListener('click', function() {
+              window.location.href = `/chat/${donor.name}`;
+            });
+            donorList.appendChild(div);
+          });
+        } catch (error) {
+          console.error('Error loading donors:', error);
+          document.getElementById('donorList').innerHTML = '<p>Error loading donors. Please try again.</p>';
+        }
+      }
+    </script>
   </body>
 </html>

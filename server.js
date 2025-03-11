@@ -1,5 +1,5 @@
 const { initializeApp, cert } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 var serviceAccount = require("./key.json");
 
 initializeApp({
@@ -15,9 +15,17 @@ const session = require("express-session");
 const express = require("express");
 const app = express();
 
+const messageSchema = {
+  senderId: String,
+  receiverId: String,
+  content: String,
+  timestamp: FieldValue.serverTimestamp()
+};
+
 app.set("view engine", "ejs");
 app.use(bp.urlencoded({ extended: true }));
 app.use(bp.json());
+app.use(express.static('public')); // Serve static files from public directory
 app.use(
   session({
     secret: "food donation app",
@@ -48,6 +56,35 @@ app.get("/orglogin", function (req, res) {
 
 app.get("/donlogin", function (req, res) {
   res.render("don_login", { errState: false });
+});
+
+app.get("/chat", (req, res) => {
+  res.render("chat"); // This will render chat.ejs
+});
+
+app.get("/chat/:receiverId", async (req, res) => {
+  const receiverId = req.params.receiverId;
+  let senderId;
+  
+  // Determine if the user is a donor or organization
+  if (req.session.userEmail) {
+    const donorSnapshot = await db.collection("Donors").where("email", "==", req.session.userEmail).get();
+    if (!donorSnapshot.empty) {
+      senderId = donorSnapshot.docs[0].data().Donor_name;
+    }
+  } else if (req.session.orgEmail) {
+    const orgSnapshot = await db.collection("Organizations").where("email", "==", req.session.orgEmail).get();
+    if (!orgSnapshot.empty) {
+      senderId = orgSnapshot.docs[0].data().organization_name;
+    }
+  }
+  
+  if (!senderId) {
+    console.error("Sender ID not found. Redirecting to home.");
+    return res.redirect("/");
+  }
+
+  res.render("chat", { senderId, receiverId });
 });
 
 app.post("/org_register_submit", function (req, res) {
@@ -226,6 +263,7 @@ app.get("/donat_food", async function (req, res) {
   res.render("food_donate_form", {
     dataArr: { org_data },
     don_details: don_data.docs[0].data(),
+    OSM_STYLES: OSM_STYLES
   });
 });
 
@@ -301,6 +339,7 @@ app.get("/donat_grocy", async function (req, res) {
   res.render("grocery_donate_form", {
     dataArr: { org_data },
     don_details: don_data.docs[0].data(),
+    OSM_STYLES: OSM_STYLES
   });
 });
 
@@ -395,7 +434,11 @@ app.get("/don_profile", async (req, res) => {
   const donHisRef = donorSnapshot.docs[0].ref.collection("Donation_History");
   const donHis = await donHisRef.get();
   const no_donations = donHis.size;
-  res.render("don_profile", { don_data, no_donations });
+  res.render("don_profile", { 
+    don_data, 
+    no_donations,
+    OSM_STYLES: OSM_STYLES
+  });
 });
 
 app.get("/org_profile", async (req, res) => {
@@ -412,7 +455,11 @@ app.get("/org_profile", async (req, res) => {
   const donHisRef = donorSnapshot.docs[0].ref.collection("Donation_History");
   const donHis = await donHisRef.get();
   const no_donations = donHis.size;
-  res.render("org_profile", { org_data, no_donations });
+  res.render("org_profile", { 
+    org_data, 
+    no_donations,
+    OSM_STYLES: OSM_STYLES
+  });
 });
 
 app.get("/don_home", (req, res) => {
@@ -480,6 +527,8 @@ app.post("/donation_accept", async (req, res) => {
     .collection("Organizations")
     .where("email", "==", org_email)
     .get();
+  
+  const orgData = orgdb.docs[0].data();
 
   const orgHisRef = orgdb.docs[0].ref
     .collection("Donation_History")
@@ -558,10 +607,154 @@ app.post("/donation_collect", async (req, res) => {
   });
 });
 
+app.post('/messages', async (req, res) => {
+  const { senderId, receiverId, content } = req.body;
+  
+  if (!senderId || !receiverId || !content) {
+    return res.status(400).send('Missing required fields');
+  }
+  
+  try {
+    await db.collection('messages').add({
+      senderId,
+      receiverId,
+      content,
+      timestamp: FieldValue.serverTimestamp()
+    });
+    res.status(200).send('Message sent successfully.');
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).send('Error sending message: ' + error.message);
+  }
+});
+
+app.get('/messages/:user1/:user2', async (req, res) => {
+  const { user1, user2 } = req.params;
+  
+  if (!user1 || !user2) {
+    return res.status(400).send('Missing required parameters');
+  }
+  
+  try {
+    const messagesRef = db.collection('messages');
+    
+    const snapshot = await messagesRef
+      .orderBy('timestamp')
+      .get();
+    
+    const messages = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if ((data.senderId === user1 && data.receiverId === user2) || 
+          (data.senderId === user2 && data.receiverId === user1)) {
+        messages.push({
+          id: doc.id,
+          senderId: data.senderId,
+          receiverId: data.receiverId,
+          content: data.content,
+          timestamp: data.timestamp ? data.timestamp.toDate() : new Date()
+        });
+      }
+    });
+    
+    res.json(messages);
+  } catch (error) {
+    console.error('Error retrieving messages:', error);
+    res.status(500).send('Error retrieving messages: ' + error.message);
+  }
+});
+
+app.get('/api/organizations', async (req, res) => {
+  try {
+    const organizationsSnapshot = await db.collection('Organizations').get();
+    const organizations = [];
+    
+    organizationsSnapshot.forEach(doc => {
+      const data = doc.data();
+      organizations.push({
+        id: doc.id,
+        name: data.organization_name,
+        email: data.email
+      });
+    });
+    
+    res.json(organizations);
+  } catch (error) {
+    console.error('Error fetching organizations:', error);
+    res.status(500).send('Error fetching organizations');
+  }
+});
+
+app.get('/api/donors', async (req, res) => {
+  try {
+    const donorsSnapshot = await db.collection('Donors').get();
+    const donors = [];
+    
+    donorsSnapshot.forEach(doc => {
+      const data = doc.data();
+      donors.push({
+        id: doc.id,
+        name: data.Donor_name,
+        email: data.email
+      });
+    });
+    
+    res.json(donors);
+  } catch (error) {
+    console.error('Error fetching donors:', error);
+    res.status(500).send('Error fetching donors');
+  }
+});
+
+app.get("/find-organizations", async (req, res) => {
+  try {
+    // Get all organizations
+    const organizationsSnapshot = await db.collection("Organizations").get();
+    const organizations = [];
+    
+    organizationsSnapshot.forEach(doc => {
+      organizations.push(doc.data());
+    });
+    
+    res.render("find_organizations", { 
+      organizations,
+      OSM_STYLES: OSM_STYLES
+    });
+  } catch (error) {
+    console.error("Error fetching organizations:", error);
+    res.status(500).send("Error fetching organizations");
+  }
+});
+
 app.get("/logout", (req, res) => {
   req.session.destroy();
   res.render("intro");
 });
+
+// Make OSM_STYLES available to all templates
+const OSM_STYLES = `
+.org-marker-container {
+  background: transparent;
+}
+.org-marker {
+  width: 25px;
+  height: 41px;
+  background-image: url('https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: hue-rotate(120deg);
+}
+.donor-marker-container {
+  background: transparent;
+}
+.donor-marker {
+  width: 25px;
+  height: 41px;
+  background-image: url('https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+`;
 
 app.listen(3000, () => {
   console.log("Server runs on port 3000");

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    #chat-container {
+      max-width: 800px;
+      margin: 20px auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    #messages-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+    #messages-list li {
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+    }
+    .sent-message {
+      background-color: #e3f2fd;
+      text-align: right;
+      margin-left: 20%;
+    }
+    .received-message {
+      background-color: #f1f1f1;
+      margin-right: 20%;
+    }
+    #message-form {
+      display: flex;
+    }
+    #message-input {
+      flex-grow: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px 0 0 4px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .back-button {
+      padding: 8px 16px;
+      background-color: #f1f1f1;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div class="header">
+      <h2>Chat with <%= typeof receiverId !== 'undefined' ? receiverId : 'User' %></h2>
+      <a href="javascript:history.back()" class="back-button">Back</a>
+    </div>
+    
+    <ul id="messages-list">
+      <!-- Messages will be loaded here -->
+    </ul>
+    
+    <form id="message-form">
+      <input type="text" id="message-input" placeholder="Type your message here..." required>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    // Store sender and receiver IDs
+    const senderId = "<%= typeof senderId !== 'undefined' ? senderId : '' %>";
+    const receiverId = "<%= typeof receiverId !== 'undefined' ? receiverId : '' %>";
+    
+    // Function to load messages
+    async function loadMessages() {
+      if (!senderId || !receiverId) return;
+      
+      try {
+        const response = await fetch(`/messages/${senderId}/${receiverId}`);
+        const messages = await response.json();
+        
+        const messagesList = document.getElementById('messages-list');
+        messagesList.innerHTML = '';
+        
+        messages.forEach(message => {
+          const li = document.createElement('li');
+          li.className = message.senderId === senderId ? 'sent-message' : 'received-message';
+          li.innerHTML = `<strong>${message.senderId === senderId ? 'You' : message.senderId}:</strong> ${message.content}`;
+          messagesList.appendChild(li);
+        });
+        
+        // Scroll to the bottom of the messages list
+        messagesList.scrollTop = messagesList.scrollHeight;
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      }
+    }
+    
+    // Load messages when the page loads
+    document.addEventListener('DOMContentLoaded', loadMessages);
+    
+    // Handle form submission
+    document.getElementById('message-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      
+      const messageInput = document.getElementById('message-input');
+      const content = messageInput.value.trim();
+      
+      if (!content || !senderId || !receiverId) return;
+      
+      try {
+        const response = await fetch('/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            senderId,
+            receiverId,
+            content
+          })
+        });
+        
+        if (response.ok) {
+          // Clear the input field
+          messageInput.value = '';
+          
+          // Add the new message to the UI immediately
+          const messagesList = document.getElementById('messages-list');
+          const li = document.createElement('li');
+          li.className = 'sent-message';
+          li.innerHTML = `<strong>You:</strong> ${content}`;
+          messagesList.appendChild(li);
+          
+          // Scroll to the bottom
+          messagesList.scrollTop = messagesList.scrollHeight;
+          
+          // Then reload all messages to ensure everything is in sync
+          loadMessages();
+        } else {
+          console.error('Failed to send message');
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    });
+    
+    // Poll for new messages every 3 seconds
+    setInterval(loadMessages, 3000);
+  </script>
+</body>
+</html>
