@@ -726,6 +726,165 @@ app.get("/find-organizations", async (req, res) => {
   }
 });
 
+// New API endpoints for the recommendation service
+
+// Get organizations with location data for recommendations
+app.get('/api/organizations/with-location', async (req, res) => {
+  try {
+    const organizationsSnapshot = await db.collection('Organizations').get();
+    const organizations = [];
+    
+    organizationsSnapshot.forEach(doc => {
+      const data = doc.data();
+      
+      // Create a location object if we have address data
+      let location = null;
+      if (data.street && data.city && data.state && data.pincode) {
+        // We'll geocode this on the client side
+        location = {
+          address: `${data.street}, ${data.city}, ${data.dist}, ${data.state}, ${data.pincode}`
+        };
+      }
+      
+      organizations.push({
+        id: doc.id,
+        name: data.organization_name,
+        email: data.email,
+        phone: data.ph_no,
+        location: location,
+        address: {
+          street: data.street,
+          city: data.city,
+          district: data.dist,
+          state: data.state,
+          pincode: data.pincode
+        }
+      });
+    });
+    
+    res.json(organizations);
+  } catch (error) {
+    console.error('Error fetching organizations with location:', error);
+    res.status(500).send('Error fetching organizations');
+  }
+});
+
+// Get donation history for the logged-in donor
+app.get('/api/donor/history', async (req, res) => {
+  try {
+    if (!req.session.userEmail) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const donorEmail = req.session.userEmail;
+    const donorQuery = db.collection("Donors").where("email", "==", donorEmail);
+    const donorSnapshot = await donorQuery.get();
+    
+    if (donorSnapshot.empty) {
+      return res.status(404).json({ error: 'Donor not found' });
+    }
+    
+    const donorDoc = donorSnapshot.docs[0];
+    const donHistoryRef = donorDoc.ref.collection("Donation_History");
+    const donHistorySnapshot = await donHistoryRef.get();
+    
+    const donationHistory = [];
+    donHistorySnapshot.forEach(doc => {
+      donationHistory.push(doc.data());
+    });
+    
+    res.json(donationHistory);
+  } catch (error) {
+    console.error('Error fetching donor history:', error);
+    res.status(500).send('Error fetching donor history');
+  }
+});
+
+// Get recommended organizations for a donor
+app.get('/api/recommended-organizations', async (req, res) => {
+  try {
+    if (!req.session.userEmail) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const donorEmail = req.session.userEmail;
+    const donorQuery = db.collection("Donors").where("email", "==", donorEmail);
+    const donorSnapshot = await donorQuery.get();
+    
+    if (donorSnapshot.empty) {
+      return res.status(404).json({ error: 'Donor not found' });
+    }
+    
+    const donorData = donorSnapshot.docs[0].data();
+    
+    // Get all organizations
+    const organizationsSnapshot = await db.collection('Organizations').get();
+    const organizations = [];
+    
+    organizationsSnapshot.forEach(doc => {
+      const data = doc.data();
+      organizations.push({
+        id: doc.id,
+        name: data.organization_name,
+        email: data.email,
+        phone: data.ph_no,
+        address: {
+          street: data.street,
+          city: data.city,
+          district: data.dist,
+          state: data.state,
+          pincode: data.pincode
+        }
+      });
+    });
+    
+    // Get donor's donation history
+    const donorDoc = donorSnapshot.docs[0];
+    const donHistoryRef = donorDoc.ref.collection("Donation_History");
+    const donHistorySnapshot = await donHistoryRef.get();
+    
+    const donationHistory = [];
+    donHistorySnapshot.forEach(doc => {
+      donationHistory.push(doc.data());
+    });
+    
+    // Simple recommendation algorithm based on donation history
+    const scoredOrganizations = organizations.map(org => {
+      let score = 0;
+      
+      // Factor 1: Previous donation history
+      const previousDonations = donationHistory.filter(
+        donation => donation.Donate_to === org.name
+      );
+      
+      if (previousDonations.length > 0) {
+        // Reward previous successful donations
+        score += Math.min(previousDonations.length * 10, 30); // Max 30 points for history
+      }
+      
+      // Factor 2: Location proximity (simple matching by city/district)
+      if (org.address.city === donorData.city) {
+        score += 20; // Same city
+      } else if (org.address.district === donorData.dist) {
+        score += 10; // Same district
+      }
+      
+      return {
+        ...org,
+        score
+      };
+    });
+    
+    // Sort by score (highest first)
+    const recommendations = scoredOrganizations.sort((a, b) => b.score - a.score);
+    
+    res.json(recommendations);
+  } catch (error) {
+    console.error('Error generating recommendations:', error);
+    res.status(500).send('Error generating recommendations');
+  }
+});
+
 app.get("/logout", (req, res) => {
   req.session.destroy();
   res.render("intro");

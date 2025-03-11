@@ -1,73 +1,60 @@
-// OpenStreetMap utilities for Food Donation app
+/**
+ * OpenStreetMap Utilities
+ * 
+ * This file contains utility functions for working with OpenStreetMap.
+ */
 
-// Initialize an OpenStreetMap in the specified element
-function initOpenStreetMap(elementId, position = CHENNAI_CENTER, zoom = DEFAULT_ZOOM) {
-  const mapElement = document.getElementById(elementId);
-  if (!mapElement) return null;
-  
-  // Create the map with Leaflet
-  const map = L.map(elementId).setView([position.lat, position.lng], zoom);
-  
-  // Add the OpenStreetMap tile layer
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19
-  }).addTo(map);
-  
-  return map;
-}
-
-// Add a marker to an OpenStreetMap
-function addOsmMarker(map, position, title = '', isOrganization = false) {
-  if (!map) return null;
-  
-  // Use different marker colors for organizations vs donors
-  const markerIcon = isOrganization ? 
-    L.divIcon({
-      html: `<div class="org-marker" title="${title}"></div>`,
-      className: 'org-marker-container',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41]
-    }) : 
-    L.divIcon({
-      html: `<div class="donor-marker" title="${title}"></div>`,
-      className: 'donor-marker-container',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41]
-    });
-  
-  const marker = L.marker([position.lat, position.lng], {
-    icon: markerIcon,
-    title: title
-  }).addTo(map);
-  
-  // Add popup with title
-  if (title) {
-    marker.bindPopup(title);
-  }
-  
-  return marker;
-}
-
-// Geocode an address to get coordinates using Nominatim (OpenStreetMap's geocoding service)
-async function geocodeAddressOsm(address) {
-  if (!address) return null;
-  
+/**
+ * Geocode an address using Nominatim
+ * @param {string} address - The address to geocode
+ * @returns {Promise} - A promise that resolves to the geocoded coordinates
+ */
+async function geocodeAddress(address) {
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', Chennai, Tamil Nadu, India')}`);
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
     const data = await response.json();
     
     if (data && data.length > 0) {
       return {
         lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon)
+        lng: parseFloat(data[0].lon),
+        displayName: data[0].display_name
       };
-    } else {
-      console.error(`Geocoding failed for address "${address}": No results`);
-      throw new Error('Geocoding failed: No results');
     }
+    
+    throw new Error('No results found');
   } catch (error) {
-    console.error(`Geocoding failed for address "${address}":`, error);
+    console.error('Geocoding error:', error);
     throw error;
   }
+}
+
+/**
+ * Calculate the distance between two points using the Haversine formula
+ * @param {number} lat1 - Latitude of point 1
+ * @param {number} lon1 - Longitude of point 1
+ * @param {number} lat2 - Latitude of point 2
+ * @param {number} lon2 - Longitude of point 2
+ * @returns {number} - Distance in kilometers
+ */
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c; // Distance in km
+  return distance;
+}
+
+/**
+ * Convert degrees to radians
+ * @param {number} deg - Degrees
+ * @returns {number} - Radians
+ */
+function deg2rad(deg) {
+  return deg * (Math.PI/180);
 }

@@ -10,6 +10,7 @@
   <!-- Map libraries -->
   <script src="/js/maps-config.js"></script>
   <script src="/js/openstreetmap-utils.js"></script>
+  <script src="/js/ml-services/recommendation-service.js"></script>
   
   <!-- Leaflet CSS and JS for OpenStreetMap -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -38,6 +39,19 @@
     }
     .org-item:hover {
       background-color: #f5f5f5;
+    }
+    .org-item.recommended {
+      background-color: #e8f4e8;
+      border-left: 4px solid #28a745;
+    }
+    .recommended-badge {
+      background-color: #28a745;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 5px;
+      border-radius: 3px;
+      margin-left: 5px;
+      vertical-align: middle;
     }
     body {
       background-image: url("https://static.vecteezy.com/system/resources/previews/001/409/329/original/colorful-organic-geometric-shapes-abstract-background-free-vector.jpg");
@@ -106,6 +120,7 @@
     <div class="row mt-4">
       <div class="col-md-6">
         <h3>Organizations List</h3>
+        <p class="recommendation-info" id="recommendation-info">Organizations are listed based on your donation history and location.</p>
         <div class="org-list" id="org-list">
           <!-- Organizations will be loaded here -->
           <p>Loading organizations...</p>
@@ -144,7 +159,7 @@
       }
     }
     
-    function displayOrganizations() {
+    async function displayOrganizations() {
       const orgList = document.getElementById('org-list');
       orgList.innerHTML = '';
       
@@ -153,11 +168,45 @@
         return;
       }
       
-      organizations.forEach(org => {
+      // Try to get recommendations
+      let recommendations = [];
+      try {
+        const response = await fetch('/api/recommended-organizations');
+        if (response.ok) {
+          recommendations = await response.json();
+        }
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+      }
+      
+      // Create a copy of organizations to sort
+      const sortedOrgs = [...organizations];
+      
+      // Sort organizations based on recommendations
+      sortedOrgs.sort((a, b) => {
+        const aRec = recommendations.find(r => r.name === a.organization_name) || { score: 0 };
+        const bRec = recommendations.find(r => r.name === b.organization_name) || { score: 0 };
+        return bRec.score - aRec.score;
+      });
+      
+      // Display organizations
+      sortedOrgs.forEach((org, index) => {
         // Create a list item for the organization
         const div = document.createElement('div');
         div.className = 'org-item';
-        div.textContent = org.organization_name;
+        
+        // Check if this is a recommended organization
+        const rec = recommendations.find(r => r.name === org.organization_name);
+        if (rec && rec.score > 0 && index < 3) {
+          div.className += ' recommended';
+          div.innerHTML = `
+            ${org.organization_name} 
+            <span class="recommended-badge">Recommended</span>
+          `;
+        } else {
+          div.textContent = org.organization_name;
+        }
+        
         orgList.appendChild(div);
         
         // Only try to geocode if we have address data

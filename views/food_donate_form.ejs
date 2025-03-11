@@ -17,6 +17,7 @@
     ></script>
     <script src="/js/maps-config.js"></script>
     <script src="/js/openstreetmap-utils.js"></script>
+    <script src="/js/ml-services/recommendation-service.js"></script>
     
     <!-- Leaflet CSS and JS for OpenStreetMap -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -203,6 +204,24 @@
         box-shadow: 0 0 5px grey;
       }
       
+      /* Recommendation styles */
+      .recommended-badge {
+        background-color: #28a745;
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 5px;
+        border-radius: 3px;
+        margin-left: 5px;
+        vertical-align: middle;
+      }
+      
+      .recommendation-info {
+        margin-top: 5px;
+        font-size: 0.8rem;
+        color: #666;
+        font-style: italic;
+      }
+      
       /* OpenStreetMap marker styles */
       <%= OSM_STYLES %>
     </style>
@@ -327,10 +346,11 @@
             </div>
 
             <h3 class="donate-to">Donate To:</h3>
+            <div class="recommendation-info" id="recommendation-info">Loading recommendations...</div>
             <select name="orgname" id="org_sel" required>
               <option selected hidden value="">Select Organization</option>
               <% for (let i = 0; i < dataArr.org_data.length; i++) { %>
-              <option value="<%= dataArr.org_data[i].organization_name %>">
+              <option value="<%= dataArr.org_data[i].organization_name %>" data-org-id="<%= i %>">
                 <%= dataArr.org_data[i].organization_name %>, <%=
                 dataArr.org_data[i].city %>
               </option>
@@ -433,6 +453,67 @@
         });
       }
       
+      // Smart recommendation system
+      async function loadRecommendations() {
+        try {
+          const response = await fetch('/api/recommended-organizations');
+          if (!response.ok) {
+            throw new Error('Failed to load recommendations');
+          }
+          
+          const recommendations = await response.json();
+          
+          // Update the recommendation info text
+          const infoElement = document.getElementById('recommendation-info');
+          infoElement.textContent = 'Organizations are ranked based on your donation history and location.';
+          
+          // Get the select element
+          const selectElement = document.getElementById('org_sel');
+          
+          // Create a new array of options
+          const options = Array.from(selectElement.options);
+          
+          // Skip the first option (the placeholder)
+          const firstOption = options.shift();
+          
+          // Sort the remaining options based on recommendations
+          options.sort((a, b) => {
+            const aName = a.value;
+            const bName = b.value;
+            
+            const aRec = recommendations.find(r => r.name === aName) || { score: 0 };
+            const bRec = recommendations.find(r => r.name === bName) || { score: 0 };
+            
+            return bRec.score - aRec.score;
+          });
+          
+          // Clear the select element
+          selectElement.innerHTML = '';
+          
+          // Add the placeholder back
+          selectElement.appendChild(firstOption);
+          
+          // Add the sorted options back
+          options.forEach((option, index) => {
+            const orgName = option.value;
+            const rec = recommendations.find(r => r.name === orgName);
+            
+            if (rec && rec.score > 0) {
+              // Add a "Recommended" badge to the top 3 options
+              if (index < 3) {
+                option.innerHTML = `${option.innerHTML} <span class="recommended-badge">Recommended</span>`;
+              }
+            }
+            
+            selectElement.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Error loading recommendations:', error);
+          const infoElement = document.getElementById('recommendation-info');
+          infoElement.textContent = 'Organizations are listed alphabetically.';
+        }
+      }
+      
       function initMap() {
         // Initialize OpenStreetMap
         const map = L.map('donation-map').setView([CHENNAI_CENTER.lat, CHENNAI_CENTER.lng], DEFAULT_ZOOM);
@@ -530,5 +611,3 @@
     </script>
   </body>
 </html>
-
-
