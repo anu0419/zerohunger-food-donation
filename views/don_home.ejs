@@ -1,347 +1,589 @@
 <!DOCTYPE html>
+
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Donor Dashboard</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
-      crossorigin="anonymous"
-    />
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-      crossorigin="anonymous"
-    ></script>
+
+
+
+    <!-- Bootstrap CSS -->
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
     <style>
-      .con {
-        display: flex;
-        align-items: center;
-      }
-      .con2 {
-        margin-top: 40px;
-        height: 100vh;
-        background-image: url("https://i.ibb.co/k2szXKz/bg-img.jpg");
-        background-attachment: fixed;
-        background-size: contain;
-        background-position: right;
-        background-repeat: no-repeat;
-      }
-      .bg_col {
-        height: 100%;
-        width: 100%;
-        background: linear-gradient(to right, black 20%, rgba(0, 0, 0, 0.258));
-        display: flex;
-        align-items: center;
-        gap: 20px;
-      }
-      h2 {
-        font-weight: bold;
-      }
-      .food {
-        text-indent: 10%;
-        width: 24%;
-        height: 60%;
-        background-color: #eaeaea;
-        border-radius: 5px;
-        box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-        padding: 20px;
-        margin-left: 80px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-      }
-      .foodhead {
-        text-indent: 0px;
-      }
-      .groceryhead {
-        text-indent: 0px;
-      }
-      .grocery {
-        border-radius: 5px;
-        text-indent: 10%;
-        color: #eaeaea;
-        border: 2px solid;
-        box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-        width: 24%;
-        height: 60%;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-      }
-      .bt {
-        padding: 0px 20px 0px 0px;
-        display: flex;
-        justify-content: end;
-      }
-      .btb {
-        width: 130px;
-        height: 40px;
-        background-color: rgb(32 180 32);
-        border-radius: 5px;
-        box-shadow: 0 0 5px gray;
-        border: none;
-        color: white;
-      }
-      .btb:hover {
-        background-color: rgba(255, 255, 255, 0.25);
-        color: rgb(32 180 32);
-        font-weight: bold;
-        transition: 0.3s;
-        border: 2px solid rgb(32 180 32);
-      }
-      p {
-        text-align: justify;
-      }
-      .chat-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #666699;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        font-size: 24px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-      }
-      .chat-btn:hover {
-        background-color: #555588;
-      }
-      .chat-popup {
-        display: none;
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        width: 300px;
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000;
-        padding: 15px;
-      }
-      .org-list {
-        max-height: 300px;
-        overflow-y: auto;
-      }
-      .org-item {
-        padding: 10px;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-      }
-      .org-item:hover {
-        background-color: #f5f5f5;
-      }
-      .close-popup {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        cursor: pointer;
-        font-size: 18px;
-      }
-      .map-btn {
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        font-size: 24px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-      }
-      .map-btn:hover {
-        background-color: #45a049;
-      }
+
+        /* Color Palette */
+
+        :root {
+
+            --primary-color: #33658A;
+
+            --secondary-color: #86BBD8;
+
+            --accent-color: #82C222;
+
+            --highlight-color: #F6AE2D;
+
+            --background-light: #F9F9F9;
+
+            --text-dark: #333;
+
+        }
+
+            
+
+        /* General Styles */
+
+        /* Background Pattern */
+
+          body {
+
+              font-family: 'Poppins', sans-serif;
+
+              background-color: #f6f6f6;
+
+              background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
+
+              background-size: 200px;
+
+              background-blend-mode: overlay;
+
+              margin: 0;
+
+              padding: 0;
+
+            }
+
+
+
+        /* Navbar */
+
+        .navbar {
+
+            background-color: var(--primary-color);
+
+            padding: 15px 20px;
+
+        }
+
+        .navbar-brand {
+
+            font-weight: bold;
+
+            font-size: 22px;
+
+            color: white;
+
+        }
+
+        .navbar-toggler {
+
+            border: none;
+
+        }
+
+        .nav-link {
+
+            color: white !important;
+
+            font-weight: 500;
+
+            padding: 10px 15px;
+
+            transition: 0.3s;
+
+        }
+
+        .nav-link:hover {
+
+            background-color: var(--secondary-color);
+
+            border-radius: 5px;
+
+        }
+
+
+
+        /* Dashboard Section */
+
+        .dashboard-container {
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            min-height: 100vh;
+
+            padding: 60px 20px;
+
+        }
+
+        .card-container {
+
+            display: flex;
+
+            gap: 40px;
+
+            max-width: 1200px;
+
+            width: 100%;
+
+            justify-content: center;
+
+            flex-wrap: wrap;
+
+        }
+
+
+
+        /* Stylish Cards */
+
+        .dashboard-card {
+
+            background: var(--highlight-color);
+
+            padding: 40px;
+
+            border-radius: 20px;
+
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+
+            text-align: center;
+
+            width: 450px;
+
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+
+            color: white;
+
+            position: relative;
+
+            overflow: hidden;
+
+        }
+
+        .dashboard-card::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 100%;
+
+            height: 5px;
+
+            background-color: var(--accent-color);
+
+            bottom: 0;
+
+            left: 0;
+
+            transition: height 0.3s ease-in-out;
+
+        }
+
+        .dashboard-card:hover {
+
+            transform: scale(1.07);
+
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+        }
+
+        .dashboard-card:hover::after {
+
+            height: 10px;
+
+        }
+
+        .dashboard-card h2 {
+
+            font-size: 28px;
+
+            font-weight: bold;
+
+            margin-bottom: 15px;
+
+        }
+
+        .dashboard-card p {
+
+            font-size: 16px;
+
+            line-height: 1.6;
+
+        }
+
+
+
+        /* Buttons */
+
+        .donate-btn {
+
+            background-color: var(--accent-color);
+
+            border: none;
+
+            color: white;
+
+            padding: 12px 25px;
+
+            border-radius: 50px;
+
+            font-size: 18px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: transform 0.3s, background-color 0.3s;
+
+            display: inline-block;
+
+        }
+
+        .donate-btn:hover {
+
+            background-color: var(--primary-color);
+
+            transform: scale(1.05);
+
+        }
+
+
+
+        /* Floating Buttons */
+
+        .floating-btn {
+
+            position: fixed;
+
+            bottom: 20px;
+
+            right: 20px;
+
+            background-color: var(--primary-color);
+
+            color: white;
+
+            border: none;
+
+            border-radius: 50%;
+
+            width: 60px;
+
+            height: 60px;
+
+            font-size: 26px;
+
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            transition: 0.3s;
+
+        }
+
+        .floating-btn:hover {
+
+            background-color: var(--secondary-color);
+
+        }
+
+
+
+        .map-btn {
+
+            bottom: 90px;
+
+        }
+
+
+
+        /* Micro Interaction - Animated Wave on Card Hover */
+
+        @keyframes wave {
+
+            0% { transform: translateX(-100%); }
+
+            100% { transform: translateX(100%); }
+
+        }
+
+        .dashboard-card:hover::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 120%;
+
+            height: 10px;
+
+            background-color: white;
+
+            top: 0;
+
+            left: -10%;
+
+            transform: rotate(2deg);
+
+            animation: wave 0.6s linear;
+
+        }
+
     </style>
-  </head>
-  <body>
-    <nav class="navbar navbar-dark bg-dark fixed-top">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">FOOD DONATION</a>
-        <div class="con">
-          <h3
-            class="navbar-toggler"
-            data-bs-toggle="offcanvas"
-            aria-controls="offcanvasDarkNavbar"
-            aria-label="Toggle navigation"
-            style="border: none"
-          >
-            <%= name %>
-          </h3>
-          <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="offcanvas"
-            data-bs-target="#offcanvasDarkNavbar"
-            aria-controls="offcanvasDarkNavbar"
-            aria-label="Toggle navigation"
-          >
-            <span class="navbar-toggler-icon"></span>
-          </button>
+
+</head>
+
+<body>
+
+    <!-- Navbar -->
+
+    <nav class="navbar navbar-dark fixed-top">
+
+        <div class="container-fluid">
+
+            <a class="navbar-brand" href="#">ZeroHunger</a>
+
+            <div>
+
+                <h3 class="navbar-toggler" style="border: none; color: white;">Donor</h3>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar">
+
+                    <span class="navbar-toggler-icon"></span>
+
+                </button>
+
+            </div>
+
+
+
+            <!-- Sidebar -->
+
+            <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar">
+
+                <div class="offcanvas-header">
+
+                    <h5 class="offcanvas-title">MENU</h5>
+
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+
+                </div>
+
+                <div class="offcanvas-body">
+
+                    <ul class="navbar-nav">
+
+                        <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+
+                        <li class="nav-item"><a class="nav-link" href="/don_profile">Profile</a></li>
+
+                        <li class="nav-item"><a class="nav-link" href="/don_history">History</a></li>
+
+                        <li class="nav-item"><a class="nav-link" href="/find-organizations">Find Organizations</a></li>
+
+                        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <div
-          class="offcanvas offcanvas-end text-bg-dark"
-          tabindex="-1"
-          id="offcanvasDarkNavbar"
-          aria-labelledby="offcanvasDarkNavbarLabel"
-        >
-          <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasDarkNavbarLabel">MENU</h5>
-            <button
-              type="button"
-              class="btn-close btn-close-white"
-              data-bs-dismiss="offcanvas"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="offcanvas-body">
-            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-              <li class="nav-item">
-                <a
-                  class="nav-link active"
-                  aria-current="page"
-                  href="#"
-                  style="
-                    background-color: #666699;
-                    padding-left: 20px;
-                    border-radius: 5px;
-                  "
-                  >Home</a
-                >
-              </li>
-              <li class="nav-item">
-                <a
-                  class="nav-link active"
-                  aria-current="page"
-                  href="/don_profile"
-                  >Profile</a
-                >
-              </li>
-              <li class="nav-item">
-                <a
-                  class="nav-link active"
-                  aria-current="page"
-                  href="/don_history"
-                  >History</a
-                >
-              </li>
-              <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/find-organizations">Find Organizations</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/logout">LogOut</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </nav>
-    <div class="con2">
-      <div class="bg_col">
-        <div class="food">
-          <h2 class="foodhead">DONATE FOOD</h2>
-          <p>
-            Food donation serves a dual purpose by reducing food wastage and
-            providing essential sustenance to individuals and families facing
-            economic challenges. Food donation fosters a sense of community and
-            solidarity, encouraging people to come together to tackle the
-            critical issue of food insecurity, ensuring that no one goes to bed
-            hungry.
-          </p>
-          <div class="bt">
-            <form action="/donat_food" method="get">
-              <button class="btb">Donate</button>
-            </form>
-          </div>
+
+
+
+    <!-- Dashboard Section -->
+
+    <div class="dashboard-container">
+
+        <div class="card-container">
+
+            <div class="dashboard-card">
+
+                <h2>Donate Food</h2>
+
+                <p>Help reduce food waste and provide meals to those in need.</p>
+
+                <form action="/donat_food" method="get">
+
+                    <button class="donate-btn">Donate</button>
+
+                </form>
+
+            </div>
+
+
+
+            <div class="dashboard-card">
+
+                <h2>Donate Grocery</h2>
+
+                <p>Support families facing hardships by donating essential groceries.</p>
+
+                <form action="/donat_grocy" method="get">
+
+                    <button class="donate-btn">Donate</button>
+
+                </form>
+
+            </div>
+
         </div>
-        <div class="grocery">
-          <h2 class="groceryhead">DONATE GROCERY</h2>
-          <p>
-            This charitable gesture aims to support individuals and families
-            facing financial hardship or crisis by providing them with the
-            necessary resources to meet their basic needs. Grocery donations can
-            take place through organized food drives, community initiatives, or
-            direct contributions to food banks, shelters, and charitable
-            organizations.
-          </p>
-          <div class="bt">
-            <form action="/donat_grocy" method="get">
-              <button class="btb">Donate</button>
-            </form>
-          </div>
+
+    </div>
+
+
+
+    <!-- Floating Buttons -->
+
+    <a href="/find-organizations" class="floating-btn map-btn">🗺️</a>
+
+    <button id="chatbotBtn" class="floating-btn chat-btn" style="bottom: 160px;">❓</button>
+
+
+
+    <!-- Chatbot Modal -->
+
+    <div class="modal fade" id="chatbotModal" tabindex="-1">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">Help Center</h5>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="list-group" id="questionsList">
+
+                        <!-- Questions will be loaded here -->
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
-      </div>
+
     </div>
-    
-    <button class="chat-btn" id="chatBtn">💬</button>
-    <a href="/find-organizations" class="map-btn" title="Find Organizations on Map">🗺️</a>
-    <div class="chat-popup" id="chatPopup">
-      <span class="close-popup" id="closePopup">&times;</span>
-      <h4>Chat with Organizations</h4>
-      <div class="org-list" id="orgList">
-        <p>Loading organizations...</p>
-      </div>
-    </div>
-    
+
+
+
+    <script src="/js/ml-services/smart-chatbot-service.js"></script>
+
     <script>
-      document.getElementById('chatBtn').addEventListener('click', function() {
-        const popup = document.getElementById('chatPopup');
-        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-        
-        if (popup.style.display === 'block') {
-          loadOrganizations();
-        }
-      });
-      
-      document.getElementById('closePopup').addEventListener('click', function() {
-        document.getElementById('chatPopup').style.display = 'none';
-      });
-      
-      async function loadOrganizations() {
-        try {
-          const response = await fetch('/api/organizations');
-          const organizations = await response.json();
-          
-          const orgList = document.getElementById('orgList');
-          
-          if (organizations.length === 0) {
-            orgList.innerHTML = '<p>No organizations available.</p>';
-            return;
-          }
-          
-          orgList.innerHTML = '';
-          organizations.forEach(org => {
-            const div = document.createElement('div');
-            div.className = 'org-item';
-            div.textContent = org.name;
-            div.addEventListener('click', function() {
-              window.location.href = `/chat/${org.name}`;
+
+        // Initialize chatbot
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const chatbotModal = new bootstrap.Modal(document.getElementById('chatbotModal'));
+
+            const questionsList = document.getElementById('questionsList');
+
+            
+
+            // Load donor questions
+
+            const questions = smartChatbotService.getQuestions('donor');
+
+            questionsList.innerHTML = questions.map(q => `
+
+                <button class="list-group-item list-group-item-action" data-id="${q.id}">
+
+                    ${q.question}
+
+                </button>
+
+            `).join('');
+
+            
+
+            // Handle question clicks
+
+            questionsList.addEventListener('click', function(e) {
+
+                if (e.target.matches('.list-group-item')) {
+
+                    const questionId = e.target.dataset.id;
+
+                    const answer = smartChatbotService.getAnswer(questionId, 'donor');
+
+                    
+
+                    // Show answer
+
+                    const answerElement = document.createElement('div');
+
+                    answerElement.className = 'alert alert-info mt-3';
+
+                    answerElement.textContent = answer;
+
+                    
+
+                    // Remove previous answer if exists
+
+                    const previousAnswer = questionsList.querySelector('.alert');
+
+                    if (previousAnswer) {
+
+                        previousAnswer.remove();
+
+                    }
+
+                    
+
+                    questionsList.appendChild(answerElement);
+
+                }
+
             });
-            orgList.appendChild(div);
-          });
-        } catch (error) {
-          console.error('Error loading organizations:', error);
-          document.getElementById('orgList').innerHTML = '<p>Error loading organizations. Please try again.</p>';
-        }
-      }
+
+            
+
+            // Show modal on button click
+
+            document.getElementById('chatbotBtn').addEventListener('click', function() {
+
+                chatbotModal.show();
+
+            });
+
+        });
+
     </script>
-  </body>
+
+</body>
+
 </html>

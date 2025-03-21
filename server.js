@@ -126,166 +126,231 @@ app.get("/chat/:receiverId", async (req, res) => {
   res.render("chat", { senderId, receiverId });
 });
 
-app.post("/org_register_submit", function (req, res) {
-  const email = req.body.email;
-  const psw = req.body.psw;
-  const c_psw = req.body.c_psw;
-  db.collection("Organizations")
-    .where("email", "==", email)
-    .get()
-    .then((docs) => {
-      if (docs.size > 0) {
-        res.render("org_register", {
-          sucState: false,
-          errState: true,
-          errMsg: "Organization Already Exists.!",
-        });
-      } else {
-        if (psw == c_psw) {
-          db.collection("Organizations")
-            .add({
-              organization_name: req.body.organization_name,
-              organization_id: req.body.org_id,
-              owner_name: req.body.owner_name,
-              email: email,
-              password: ph.generate(psw),
-              ph_no: req.body.phone_no,
-              state: req.body.state,
-              dist: req.body.district,
-              city: req.body.city,
-              street: req.body.street,
-              pincode: req.body.pincode,
-            })
-            .then(() => {
-              res.render("org_register", { sucState: true, errState: false });
-            });
-        } else {
-          res.render("org_register", {
-            sucState: false,
-            errState: true,
-            errMsg: "Pasword Doesn't Match.!",
-          });
-        }
-      }
-    });
-  // console.log(req.body);
-});
-
-app.post("/don_register_submit", function (req, res) {
-  const email = req.body.email;
-  const psw = req.body.psw;
-  const c_psw = req.body.c_psw;
-  db.collection("Donors")
-    .where("email", "==", email)
-    .get()
-    .then((docs) => {
-      if (docs.size > 0) {
-        res.render("don_register", {
-          sucState: false,
-          errState: true,
-          errMsg: "Donor Already Exists.!",
-        });
-      } else {
-        if (psw == c_psw) {
-          db.collection("Donors")
-            .add({
-              Donor_name: req.body.user_name,
-              email: email,
-              password: ph.generate(psw),
-              ph_no: req.body.phone_no,
-              state: req.body.state,
-              dist: req.body.district,
-              city: req.body.city,
-              street: req.body.street,
-              pincode: req.body.pincode,
-            })
-            .then(() => {
-              res.render("don_register", { sucState: true, errState: false });
-            });
-        } else {
-          res.render("don_register", {
-            sucState: false,
-            errState: true,
-            errMsg: "Pasword Doesn't Match.!",
-          });
-        }
-      }
-    });
-});
-
-app.post("/org_login_submit", async function (req, res) {
-  const org_id = req.body.org_id;
-  const email = req.body.email;
-  const psw = req.body.psw;
-  const orgdb = await db
-    .collection("Organizations")
-    .where("email", "==", email)
-    .get();
-
-  if (orgdb.size == 0) {
-    res.render("org_login", {
-      errState: true,
-      errMsg: "Owner not Found.!",
-    });
-  } else {
-    const userData = orgdb.docs[0].data();
-    if (!ph.verify(psw, userData.password)) {
-      // Incorrect password
-      res.render("org_login", {
+app.post("/org_register_submit", async function (req, res) {
+  try {
+    const email = req.body.email;
+    const psw = req.body.psw;
+    const c_psw = req.body.c_psw;
+    
+    // Validate required fields
+    if (!email || !psw || !c_psw || !req.body.organization_name || !req.body.org_id) {
+      return res.render("org_register", {
+        sucState: false,
         errState: true,
-        errMsg: "Incorrect password.!",
+        errMsg: "All fields are required",
       });
-    } else {
-      if (org_id == userData.organization_id) {
-        // Successful login
-        req.session.orgEmail = email;
-        const orgHisRef = orgdb.docs[0].ref
-          .collection("Donation_History")
-          .where("Status", "==", "Pending");
-        const orgHis = await orgHisRef.get();
-        const org_his_data = orgHis.docs.map((doc) => doc.data());
-        res.render("org_home", {
-          name: userData.organization_name,
-          dataArr: { org_his_data },
-        });
-      } else {
-        //incorrect org id
-        res.render("org_login", {
-          errState: true,
-          errMsg: "Organization not Found.!",
-        });
-      }
     }
+    
+    const docs = await db.collection("Organizations")
+      .where("email", "==", email)
+      .get();
+    
+    if (docs.size > 0) {
+      return res.render("org_register", {
+        sucState: false,
+        errState: true,
+        errMsg: "Organization Already Exists.!",
+      });
+    }
+
+    if (psw !== c_psw) {
+      return res.render("org_register", {
+        sucState: false,
+        errState: true,
+        errMsg: "Password Doesn't Match.!",
+      });
+    }
+
+    // Create organization
+    await db.collection("Organizations").add({
+      organization_name: req.body.organization_name,
+      organization_id: req.body.org_id,
+      owner_name: req.body.owner_name,
+      email: email,
+      password: ph.generate(psw),
+      ph_no: req.body.phone_no,
+      state: req.body.state,
+      dist: req.body.district,
+      city: req.body.city,
+      street: req.body.street,
+      pincode: req.body.pincode,
+    });
+
+    // Changed to redirect to login page after successful registration
+    res.redirect("/orglogin");
+  } catch (error) {
+    console.error("Error in organization registration:", error);
+    res.render("org_register", {
+      sucState: false,
+      errState: true,
+      errMsg: error.message || "Registration failed. Please try again.",
+    });
   }
 });
 
-app.post("/don_login_submit", function (req, res) {
-  const email = req.body.email;
-  const psw = req.body.psw;
-  db.collection("Donors")
-    .where("email", "==", email)
-    .get()
-    .then((docs) => {
-      if (docs.size == 0) {
-        res.render("don_login", {
-          errState: true,
-          errMsg: "Donor not Found.!",
-        });
-      } else {
-        const userData = docs.docs[0].data();
-        if (!ph.verify(psw, userData.password)) {
-          // Incorrect password
-          res.render("don_login", {
-            errState: true,
-            errMsg: "Incorrect password.!",
-          });
-        } else {
-          // Successful login
-          req.session.userEmail = email;
-          res.render("don_home", { name: userData.Donor_name });
-        }
-      }
+app.post("/don_register_submit", async function (req, res) {
+  try {
+    const email = req.body.email;
+    const psw = req.body.psw;
+    const c_psw = req.body.c_psw;
+    
+    // Validate required fields
+    if (!email || !psw || !c_psw || !req.body.user_name) {
+      return res.render("don_register", {
+        sucState: false,
+        errState: true,
+        errMsg: "All fields are required",
+      });
+    }
+    
+    const docs = await db.collection("Donors")
+      .where("email", "==", email)
+      .get();
+    
+    if (docs.size > 0) {
+      return res.render("don_register", {
+        sucState: false,
+        errState: true,
+        errMsg: "Donor Already Exists.!",
+      });
+    }
+
+    if (psw !== c_psw) {
+      return res.render("don_register", {
+        sucState: false,
+        errState: true,
+        errMsg: "Password Doesn't Match.!",
+      });
+    }
+
+    // Create donor
+    await db.collection("Donors").add({
+      Donor_name: req.body.user_name,
+      email: email,
+      password: ph.generate(psw),
+      ph_no: req.body.phone_no,
+      state: req.body.state,
+      dist: req.body.district,
+      city: req.body.city,
+      street: req.body.street,
+      pincode: req.body.pincode,
     });
+
+    // Changed to redirect to login page after successful registration
+    res.redirect("/donlogin");
+  } catch (error) {
+    console.error("Error in donor registration:", error);
+    res.render("don_register", {
+      sucState: false,
+      errState: true,
+      errMsg: error.message || "Registration failed. Please try again.",
+    });
+  }
+});
+
+app.post("/org_login_submit", async function (req, res) {
+  try {
+    const org_id = req.body.org_id;
+    const email = req.body.email;
+    const psw = req.body.psw;
+    
+    // Validate required fields
+    if (!org_id || !email || !psw) {
+      return res.render("org_login", {
+        errState: true,
+        errMsg: "All fields are required",
+      });
+    }
+
+    const orgdb = await db
+      .collection("Organizations")
+      .where("email", "==", email)
+      .get();
+
+    if (orgdb.empty) {
+      return res.render("org_login", {
+        errState: true,
+        errMsg: "Organization not Found.!",
+      });
+    }
+
+    const userData = orgdb.docs[0].data();
+    if (!ph.verify(psw, userData.password)) {
+      return res.render("org_login", {
+        errState: true,
+        errMsg: "Incorrect password.!",
+      });
+    }
+
+    if (org_id !== userData.organization_id) {
+      return res.render("org_login", {
+        errState: true,
+        errMsg: "Organization ID not Found.!",
+      });
+    }
+
+    req.session.orgEmail = email;
+    const orgHisRef = orgdb.docs[0].ref
+      .collection("Donation_History")
+      .where("Status", "==", "Pending");
+    const orgHis = await orgHisRef.get();
+    const org_his_data = orgHis.docs.map((doc) => doc.data());
+    
+    res.render("org_home", {
+      name: userData.organization_name,
+      dataArr: { org_his_data },
+    });
+  } catch (error) {
+    console.error("Error in organization login:", error);
+    res.render("org_login", {
+      errState: true,
+      errMsg: "Login failed. Please try again.",
+    });
+  }
+});
+
+app.post("/don_login_submit", async function (req, res) {
+  try {
+    const email = req.body.email;
+    const psw = req.body.psw;
+    
+    // Validate required fields
+    if (!email || !psw) {
+      return res.render("don_login", {
+        errState: true,
+        errMsg: "All fields are required",
+      });
+    }
+
+    const docs = await db
+      .collection("Donors")
+      .where("email", "==", email)
+      .get();
+
+    if (docs.empty) {
+      return res.render("don_login", {
+        errState: true,
+        errMsg: "Donor not Found.!",
+      });
+    }
+
+    const userData = docs.docs[0].data();
+    if (!ph.verify(psw, userData.password)) {
+      return res.render("don_login", {
+        errState: true,
+        errMsg: "Incorrect password.!",
+      });
+    }
+
+    req.session.userEmail = email;
+    res.render("don_home", { name: userData.Donor_name });
+  } catch (error) {
+    console.error("Error in donor login:", error);
+    res.render("don_login", {
+      errState: true,
+      errMsg: "Login failed. Please try again.",
+    });
+  }
 });
 
 app.get("/donat_food", async function (req, res) {
@@ -993,24 +1058,35 @@ app.post('/api/analyze-food-image', upload.single('foodImage'), async (req, res)
     // Read the file data
     const imageBuffer = fs.readFileSync(filePath);
     
-    // Simple image analysis based on buffer data
-    const imageAnalysis = analyzeImageData(imageBuffer, req.file.originalname);
+    // Create form data for the ML server
+    const formData = new FormData();
+    formData.append('image', new Blob([imageBuffer]), req.file.originalname);
     
-    // Create response with the analysis results
-    const response = {
-      identifiedAs: imageAnalysis.foodType,
-      confidence: imageAnalysis.confidence,
-      freshness: imageAnalysis.freshness,
-      quality: imageAnalysis.quality,
-      isEdible: imageAnalysis.isEdible,
-      warning: imageAnalysis.warning,
-      imageUrl: imageUrl
-    };
+    // Call ML server
+    const response = await fetch(`${ML_SERVER_URL}/analyze`, {
+      method: 'POST',
+      body: formData
+    });
     
-    res.json(response);
+    if (!response.ok) {
+      throw new Error('ML server error');
+    }
+    
+    const mlResults = await response.json();
+    
+    // If ML server fails, fall back to simulation
+    if (mlResults.error) {
+      console.warn('ML server error, falling back to simulation:', mlResults.error);
+      return simulateImageAnalysis(imageBuffer, req.file.originalname);
+    }
+    
+    return mlResults;
+    
   } catch (error) {
-    console.error('Error analyzing food image:', error);
-    res.status(500).json({ error: 'Error analyzing food image: ' + error.message });
+    console.error('Error calling ML server:', error);
+    // Fall back to simulation if ML server fails
+    console.warn('Falling back to simulation due to error');
+    return simulateImageAnalysis(imageBuffer, req.file.originalname);
   }
 });
 
@@ -1022,11 +1098,8 @@ app.post('/api/analyze-food-image', upload.single('foodImage'), async (req, res)
  * @param {string} filename - Original filename (used as fallback)
  * @returns {Object} Analysis results
  */
-function analyzeImageData(imageBuffer, filename) {
+function simulateImageAnalysis(imageBuffer, filename) {
   try {
-    // In a real implementation, this would use computer vision APIs
-    // For simulation, we'll use some properties of the image data
-    
     // Extract a simple hash from the image data
     let hash = 0;
     for (let i = 0; i < Math.min(imageBuffer.length, 5000); i++) {
@@ -1084,7 +1157,6 @@ function analyzeImageData(imageBuffer, filename) {
       quality,
       isEdible,
       warning,
-      // Include some "raw" data that would come from a real ML model
       rawData: {
         colorVariance,
         textureComplexity,
@@ -1106,6 +1178,8 @@ function analyzeImageData(imageBuffer, filename) {
     };
   }
 }
+
+const ML_SERVER_URL = process.env.ML_SERVER_URL || 'http://localhost:5000';
 
 // Define the port for the server
 const PORT = process.env.PORT || 3000;

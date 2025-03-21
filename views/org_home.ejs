@@ -1,367 +1,810 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
   <head>
+
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Organization Home</title>
+
     <link
+
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+
       rel="stylesheet"
+
       integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+
       crossorigin="anonymous"
+
     />
+
     <script
+
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+
       integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+
       crossorigin="anonymous"
+
     ></script>
+
     <style>
+
       body {
+
         background-image: url("https://static.vecteezy.com/system/resources/previews/001/409/329/original/colorful-organic-geometric-shapes-abstract-background-free-vector.jpg");
+
         background-size: cover;
+
         background-repeat: no-repeat;
+
         background-attachment: fixed;
+
       }
+
       .con {
+
         display: flex;
+
         align-items: center;
+
       }
+
       .maincon {
+
         margin-top: 100px;
+
       }
+
       .head {
+
         text-align: center;
+
       }
+
       .con2 {
+
         display: flex;
+
         justify-content: center;
+
       }
+
       .content {
+
         height: auto;
+
+        height: 500px;
+
         width: 600px;
+
         box-shadow: 0 0 5px gray;
+
         background-color: white;
+
         border-radius: 8px;
+
         padding: 30px;
+
         margin-bottom: 20px;
+
       }
+
       .connn {
+
         margin-top: 20px;
+
         padding: 20px;
+
         box-shadow: 0 0 5px gray;
+
         border-radius: 5px;
+
       }
+
       .connn h3 {
+
         margin: 0;
+
       }
+
       .connn p {
+
         margin: 0;
+
       }
+
       .connn button {
+
         margin-top: 10px;
+
         height: 40px;
+
         width: 100px;
+
         background-color: rgb(66 164 199);
+
         border-radius: 5px;
+
         border: none;
+
         color: white;
+
       }
+
       .connn button:hover {
+
         box-shadow: 1px 1px 5px rgb(0, 42, 104);
+
       }
+
       .popup {
+
         height: 100ch;
+
         width: 100%;
+
         position: absolute;
+
         top: 0;
+
         background-color: rgba(0, 0, 0, 0.37);
+
         display: flex;
+
         align-items: center;
+
         justify-content: center;
+
         display: none;
+
       }
+
       .popChild {
+
         background-color: white;
+
         height: 220px;
+
         width: 420px;
+
         padding: 20px;
+
         border-radius: 10px;
+
         display: flex;
+
         flex-direction: column;
+
         justify-content: space-between;
+
       }
+
       #done {
+
         height: 40px;
+
         width: 100px;
+
         border-radius: 5px;
+
         border: none;
+
         background-color: deepskyblue;
+
         box-shadow: 1px 1px 5px gray;
+
         color: white;
+
         font-weight: bold;
+
       }
+
       .popup2 {
+
         height: 100ch;
+
         width: 100%;
+
         position: absolute;
+
         top: 0;
+
         background-color: rgba(0, 0, 0, 0.37);
+
         display: flex;
+
         align-items: center;
+
         justify-content: center;
+
         display: none;
+
       }
+
       .popChild2 {
+
         background-color: white;
+
         height: 220px;
+
         width: 420px;
+
         padding: 20px;
+
         border-radius: 10px;
+
         display: flex;
+
         flex-direction: column;
+
         justify-content: space-between;
+
       }
+
       #done2 {
+
         height: 40px;
+
         width: 100px;
+
         border-radius: 5px;
+
         border: none;
+
         background-color: deepskyblue;
+
         box-shadow: 1px 1px 5px gray;
+
         color: white;
+
         font-weight: bold;
+
       }
+
       #time {
+
         height: 40px;
+
         width: 100%;
+
         border-radius: 5px;
+
         border: 1px solid gray;
+
         padding: 10px;
+
       }
+
       
+
       /* Food quality assessment styles */
+
       .quality-assessment {
+
         margin-top: 10px;
+
         padding: 10px;
+
         border: 1px solid #e0e0e0;
+
         border-radius: 5px;
+
         max-width: 300px;
+
       }
+
+
 
       .quality-badge {
+
         display: inline-block;
+
         padding: 3px 8px;
+
         color: white;
+
         border-radius: 12px;
+
         font-size: 0.8rem;
+
         margin-bottom: 8px;
+
       }
+
+
 
       .warning-message {
+
         color: #856404;
+
         background-color: #fff3cd;
+
         border: 1px solid #ffeeba;
+
         padding: 8px;
+
         margin-top: 8px;
+
         border-radius: 4px;
+
         font-size: 0.9rem;
+
       }
+
+
 
       .quality-image {
+
         max-width: 100%;
+
         margin-top: 10px;
+
         border-radius: 4px;
+
       }
+
     </style>
+
   </head>
+
   <body>
+
     <nav class="navbar navbar-dark bg-dark fixed-top">
+
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">FOOD DONATION</a>
+
+        <a class="navbar-brand" href="#">ZERO HUNGER</a>
+
         <div class="con">
+
           <h3
+
             class="navbar-toggler"
+
             data-bs-toggle="offcanvas"
+
             aria-controls="offcanvasDarkNavbar"
+
             aria-label="Toggle navigation"
+
             style="border: none"
+
           >
+
             <%= name %>
+
           </h3>
+
           <button
+
             class="navbar-toggler"
+
             type="button"
+
             data-bs-toggle="offcanvas"
+
             data-bs-target="#offcanvasDarkNavbar"
+
             aria-controls="offcanvasDarkNavbar"
+
             aria-label="Toggle navigation"
+
           >
+
             <span class="navbar-toggler-icon"></span>
+
           </button>
+
         </div>
+
+
 
         <div
+
           class="offcanvas offcanvas-end text-bg-dark"
+
           tabindex="-1"
+
           id="offcanvasDarkNavbar"
+
           aria-labelledby="offcanvasDarkNavbarLabel"
+
         >
+
           <div class="offcanvas-header">
+
             <h5 class="offcanvas-title" id="offcanvasDarkNavbarLabel">MENU</h5>
+
             <button
+
               type="button"
+
               class="btn-close btn-close-white"
+
               data-bs-dismiss="offcanvas"
+
               aria-label="Close"
+
             ></button>
+
           </div>
+
           <div class="offcanvas-body">
+
             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+
               <li class="nav-item">
+
                 <a
+
                   class="nav-link active"
+
                   aria-current="page"
+
                   href="#"
+
                   style="
+
                     background-color: #666699;
+
                     padding-left: 20px;
+
                     border-radius: 5px;
+
                   "
+
                   >Home</a
+
                 >
+
               </li>
+
               <li class="nav-item">
+
                 <a
+
                   class="nav-link active"
+
                   aria-current="page"
+
                   href="/org_profile"
+
                   >Profile</a
+
                 >
+
               </li>
+
               <li class="nav-item">
+
                 <a
+
                   class="nav-link active"
+
                   aria-current="page"
+
                   href="/org_history"
+
                   >History</a
+
                 >
+
               </li>
+
               <li class="nav-item">
+
                 <a class="nav-link" href="/logout">LogOut</a>
+
               </li>
+
             </ul>
+
           </div>
+
         </div>
+
       </div>
+
     </nav>
+
     <div class="maincon">
+
       <h1 class="head">DONATION REQUESTS</h1>
+
       <div class="con2">
+
         <div class="content">
+
           <% if (dataArr.org_his_data.length == 0) { %>
+
           <h3 style="text-align: center">No Donation Requests.!</h3>
+
           <% } %> <% for (let i = 0; i < dataArr.org_his_data.length; i++) { %>
+
           <div class="connn">
+
             <h3>Donor Name: <%= dataArr.org_his_data[i].Donor_name %></h3>
+
             <p>
+
               <b>Contact:</b> <%= dataArr.org_his_data[i].Donor_ph_no %> <br />
+
               <b>Email:</b> <%= dataArr.org_his_data[i].Donor_email %> <br />
+
               <b>Address:</b> <%= dataArr.org_his_data[i].Donor_address %> <br />
+
               <b>Donation:</b> <%= dataArr.org_his_data[i].Donation %> <br />
+
               <b>Items:</b> <%= dataArr.org_his_data[i].Items %> <br />
+
               <b>Quantity:</b> <%= dataArr.org_his_data[i].EachItem_Qty %>
+
               <br />
+
               <b>Date:</b> <%= dataArr.org_his_data[i].Date %> <br />
+
               <b>Order ID:</b> <%= dataArr.org_his_data[i].OrderId %>
+
             </p>
+
             
+
             <!-- Food Quality Assessment Section -->
+
             <% if (dataArr.org_his_data[i].QualityAssessment) { %>
+
               <div class="quality-assessment">
+
                 <h5>Food Quality Assessment</h5>
+
                 <div class="quality-badge <%= dataArr.org_his_data[i].QualityAssessment.quality === 'Good' ? 'bg-success' : dataArr.org_his_data[i].QualityAssessment.quality === 'Fair' ? 'bg-warning' : 'bg-danger' %>">
+
                   <%= dataArr.org_his_data[i].QualityAssessment.quality %>
+
                 </div>
+
                 <p><strong>Identified as:</strong> <%= dataArr.org_his_data[i].QualityAssessment.identifiedAs %></p>
+
                 <% if (dataArr.org_his_data[i].QualityAssessment.warning) { %>
+
                   <div class="warning-message">
+
                     <i class="bi bi-exclamation-triangle-fill"></i>
+
                     <%= dataArr.org_his_data[i].QualityAssessment.warning %>
+
                   </div>
+
                 <% } %>
+
                 <% if (dataArr.org_his_data[i].QualityAssessment.imageUrl) { %>
+
                   <img src="<%= dataArr.org_his_data[i].QualityAssessment.imageUrl %>" alt="Food Image" class="quality-image">
+
                 <% } %>
+
               </div>
+
             <% } %>
+
             
+
             <button
+
               onclick="accept('<%= dataArr.org_his_data[i].OrderId %>','<%= dataArr.org_his_data[i].Donor_email %>')"
+
             >
+
               Accept
+
             </button>
+
             <a href="/chat/<%= dataArr.org_his_data[i].Donor_name %>" class="btn btn-primary">Chat</a>
+
           </div>
+
           <% } %>
+
         </div>
+
       </div>
+
       <div class="popup">
+
         <div class="popChild">
+
           <div>
+
             <h3 style="color: rgb(1, 184, 1); font-weight: bold">
+
               Donation Accepted.!
+
             </h3>
+
             <p>
+
               Please Collect the Donation<br />
+
               at the given time.
+
             </p>
+
           </div>
+
           <div style="display: flex; justify-content: end">
+
             <button id="done">Done</button>
+
           </div>
+
         </div>
+
       </div>
+
       <div class="popup2">
+
         <div class="popChild2">
+
           <div>
+
             <h3 style="color: rgb(1, 184, 1); font-weight: bold">
+
               Enter Time to Collect
+
             </h3>
+
             <form id="timeform" action="/donation_accept" method="post">
+
               <input
+
                 type="text"
+
                 name="time"
+
                 id="time"
+
                 placeholder="Enter Time"
+
                 required
+
               />
+
               <input type="hidden" name="orderid" id="orderid" />
+
               <input type="hidden" name="orderemail" id="orderemail" />
+
             </form>
+
           </div>
+
           <div style="display: flex; justify-content: end">
+
             <button id="done2" form="timeform">Submit</button>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
 
+
+
+    <button id="chatbotBtn" class="floating-btn chat-btn" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; width: 60px; height: 60px; border-radius: 50%; background-color: #666699; color: white; border: none; font-size: 24px; cursor: pointer;">❓</button>
+
+
+
+    <div class="modal fade" id="chatbotModal" tabindex="-1">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">Help Center</h5>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="list-group" id="questionsList">
+
+                        <!-- Questions will be loaded here -->
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <script src="/js/ml-services/smart-chatbot-service.js"></script>
+
     <script>
-      document.getElementById("done").addEventListener("click", () => {
-        window.location.href = "/org_home";
-      });
-      function accept(orderid, email) {
-        document.querySelector(".popup2").style.display = "flex";
-        document.getElementById("orderid").value = orderid;
-        document.getElementById("orderemail").value = email;
-        document.documentElement.scrollTop = 0;
-      }
-      document.getElementById("done2").addEventListener("click", () => {
-        if (document.getElementById("time").value != "") {
-          document.querySelector(".popup2").style.display = "none";
-          document.querySelector(".popup").style.display = "flex";
-        }
-      });
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const chatbotModal = new bootstrap.Modal(document.getElementById('chatbotModal'));
+
+            const questionsList = document.getElementById('questionsList');
+
+            
+
+            const questions = smartChatbotService.getQuestions('organization');
+
+            questionsList.innerHTML = questions.map(q => `
+
+                <button class="list-group-item list-group-item-action" data-id="${q.id}">
+
+                    ${q.question}
+
+                </button>
+
+            `).join('');
+
+            
+
+            questionsList.addEventListener('click', function(e) {
+
+                if (e.target.matches('.list-group-item')) {
+
+                    const questionId = e.target.dataset.id;
+
+                    const answer = smartChatbotService.getAnswer(questionId, 'organization');
+
+                    
+
+                    const answerElement = document.createElement('div');
+
+                    answerElement.className = 'alert alert-info mt-3';
+
+                    answerElement.textContent = answer;
+
+                    
+
+                    const previousAnswer = questionsList.querySelector('.alert');
+
+                    if (previousAnswer) {
+
+                        previousAnswer.remove();
+
+                    }
+
+                    
+
+                    questionsList.appendChild(answerElement);
+
+                }
+
+            });
+
+            
+
+            document.getElementById('chatbotBtn').addEventListener('click', function() {
+
+                chatbotModal.show();
+
+            });
+
+        });
+
     </script>
+
   </body>
+
 </html>
+

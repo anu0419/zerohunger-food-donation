@@ -6,6 +6,7 @@ class FoodQualityService {
   constructor() {
     // Initialize with default settings
     this.initialized = false;
+    this.mlServerUrl = 'http://localhost:5000'; // ML server URL
   }
 
   /**
@@ -26,10 +27,10 @@ class FoodQualityService {
       
       // Create FormData to send the image
       const formData = new FormData();
-      formData.append('foodImage', imageFile);
+      formData.append('image', imageFile);
       
-      // Send to our backend API
-      const response = await fetch('/api/analyze-food-image', {
+      // Send to ML server directly
+      const response = await fetch(`${this.mlServerUrl}/analyze`, {
         method: 'POST',
         body: formData
       });
@@ -39,7 +40,9 @@ class FoodQualityService {
         throw new Error(errorData.error || 'Failed to analyze image');
       }
       
-      return await response.json();
+      const mlResults = await response.json();
+      return mlResults;
+      
     } catch (error) {
       console.error('Error analyzing food image:', error);
       throw error;
